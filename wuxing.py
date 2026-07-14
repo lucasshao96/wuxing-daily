@@ -109,11 +109,6 @@ MONTH_ZHI_WUXING = ZHI_WUXING  # 地支本气即月令五行
 def _wuxing_of_gan(gan: str) -> str:
     return GAN_WUXING.get(gan, "")
 
-def _wuxing_of_zhi(zhi: str, qi: str = "本气") -> str:
-    """取地支中指定气的五行"""
-    gan = CANG_GAN.get(zhi, {}).get(qi, "")
-    return GAN_WUXING.get(gan, "")
-
 def _has_tonggen(gan: str, all_zhi: list[str]) -> bool:
     """检查天干在四柱地支中是否有通根（藏干同五行）"""
     gan_wx = _wuxing_of_gan(gan)
@@ -141,6 +136,16 @@ LIU_CHONG_PAIRS = [("子","午"), ("丑","未"), ("寅","申"),
 # 六合
 LIU_HE_PAIRS = [("子","丑"), ("寅","亥"), ("卯","戌"),
                 ("辰","酉"), ("巳","申"), ("午","未")]
+
+# 六合化气五行
+LIU_HE_HUA_WX = {
+    ("子","丑"): "土", ("丑","子"): "土",
+    ("寅","亥"): "木", ("亥","寅"): "木",
+    ("卯","戌"): "火", ("戌","卯"): "火",
+    ("辰","酉"): "金", ("酉","辰"): "金",
+    ("巳","申"): "水", ("申","巳"): "水",
+    ("午","未"): "土", ("未","午"): "土",
+}
 
 # 三合局 {化神五行: (地支1, 地支2, 地支3)}
 SAN_HE = {
@@ -178,7 +183,7 @@ def calc_wuxing(d: date) -> dict[str, dict]:
     yg, yz = year_ganzhi(d)
     mg, mz = month_ganzhi(d)
     dg, dz = day_ganzhi(d)
-    hg, hz = hour_ganzhi(9, dg)  # 固定用辰时(9点)代表当日
+    hg, hz = hour_ganzhi(9, dg)  # 固定用巳时(9点)代表当日
 
     all_gan = [yg, mg, dg, hg]
     all_zhi = [yz, mz, dz, hz]
@@ -250,7 +255,7 @@ def calc_wuxing(d: date) -> dict[str, dict]:
             pair_rev = (all_zhi[j], all_zhi[i])
             for he_pair in LIU_HE_PAIRS:
                 if pair == he_pair or pair_rev == he_pair:
-                    hua_wx = MONTH_ZHI_WUXING.get(he_pair[1], "")
+                    hua_wx = LIU_HE_HUA_WX.get(pair, "")
                     if month_wx == hua_wx:
                         mag = HUA_FULL
                     else:
