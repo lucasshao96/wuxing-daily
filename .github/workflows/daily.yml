@@ -1,0 +1,35 @@
+name: Daily Wuxing Report
+
+on:
+  schedule:
+    - cron: '0 23 * * *'  # 7:00 AM Beijing time (UTC+8)
+  workflow_dispatch:        # Manual trigger
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run daily report
+        env:
+          USERS: ${{ secrets.USERS }}
+          EMAIL_SENDER: ${{ secrets.EMAIL_SENDER }}
+          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+          EMAIL_SMTP: ${{ secrets.EMAIL_SMTP || 'smtp.qq.com' }}
+          EMAIL_PORT: ${{ secrets.EMAIL_PORT || '587' }}
+          SERVERCHAN_SCKEY: ${{ secrets.SERVERCHAN_SCKEY || '' }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN || '' }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID || '' }}
+        run: python main.py
