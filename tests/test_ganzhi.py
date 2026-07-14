@@ -1,6 +1,8 @@
 # tests/test_ganzhi.py
+import pytest
 from datetime import date
 from ganzhi import day_ganzhi, year_ganzhi, month_ganzhi, hour_ganzhi, get_nayin
+from ganzhi import days_from_1900, get_jieqi
 
 
 def test_day_ganzhi_2026_07_15():
@@ -50,6 +52,72 @@ def test_hour_ganzhi_morning():
     gan, zhi = hour_ganzhi(7, "庚")
     assert gan == "庚", f"expected 庚, got {gan}"
     assert zhi == "辰", f"expected 辰, got {zhi}"
+
+
+def test_hour_ganzhi_midnight():
+    """hour=0 → 子时 (23:00-01:00)"""
+    gan, zhi = hour_ganzhi(0, "甲")
+    assert zhi == "子", f"expected 子, got {zhi}"
+
+
+def test_hour_ganzhi_noon():
+    """hour=12 → 午时 (11:00-13:00)"""
+    gan, zhi = hour_ganzhi(12, "甲")
+    assert zhi == "午", f"expected 午, got {zhi}"
+
+
+def test_hour_ganzhi_last():
+    """hour=23 → 子时 (23:00-01:00)"""
+    gan, zhi = hour_ganzhi(23, "甲")
+    assert zhi == "子", f"expected 子, got {zhi}"
+
+
+def test_hour_ganzhi_negative_raises():
+    """hour < 0 raises ValueError"""
+    with pytest.raises(ValueError, match="0-23"):
+        hour_ganzhi(-1, "甲")
+
+
+def test_hour_ganzhi_too_high_raises():
+    """hour > 23 raises ValueError"""
+    with pytest.raises(ValueError, match="0-23"):
+        hour_ganzhi(24, "甲")
+
+
+def test_days_from_1900_anchor():
+    """1900-01-01 is day 0"""
+    assert days_from_1900(1900, 1, 1) == 0
+
+
+def test_days_from_1900_one_day():
+    """1900-01-02 is day 1"""
+    assert days_from_1900(1900, 1, 2) == 1
+
+
+def test_days_from_1900_known():
+    """2026-07-15: verify against known day_ganzhi anchor (甲戌 = gan_idx 0, zhi_idx 10).
+    day_ganzhi(2026-07-15) = 庚寅 → gan_idx 6, zhi_idx 2.
+    diff = days_from_1900, (0 + diff) % 10 == 6, (10 + diff) % 12 == 2
+    diff ≡ 6 (mod 10), diff ≡ 4 (mod 12) → verify it works"""
+    diff = days_from_1900(2026, 7, 15)
+    # 庚 = TIAN_GAN[6], 寅 = DI_ZHI[2]
+    assert diff % 10 == 6, f"expected diff % 10 == 6, got {diff % 10}"
+    assert diff % 12 == 4, f"expected diff % 12 == 4, got {diff % 12} (寅 is index 2, so 10+4=14 ≡ 2 mod 12)"
+
+
+def test_get_jieqi_lichun():
+    """2月4日 = 立春"""
+    assert get_jieqi(date(2026, 2, 4)) == "立春"
+
+
+def test_get_jieqi_xiaoshu():
+    """7月7日 = 小暑"""
+    assert get_jieqi(date(2026, 7, 7)) == "小暑"
+
+
+def test_get_jieqi_not_term():
+    """7月15日不是节气"""
+    assert get_jieqi(date(2026, 7, 15)) is None
 
 
 def test_nayin_bingwu():
