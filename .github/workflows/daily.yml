@@ -5,6 +5,9 @@ on:
     - cron: '0 23 * * *'  # 7:00 AM Beijing time (UTC+8)
   workflow_dispatch:        # Manual trigger
 
+permissions:
+  contents: write  # 用于 commit+pushing week_log.json
+
 jobs:
   report:
     runs-on: ubuntu-latest
@@ -29,6 +32,8 @@ jobs:
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
           EMAIL_SMTP: ${{ vars.EMAIL_SMTP || 'smtp.qq.com' }}
           EMAIL_PORT: ${{ vars.EMAIL_PORT || '587' }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
           SERVERCHAN_SCKEY: ${{ secrets.SERVERCHAN_SCKEY || '' }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN || '' }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID || '' }}

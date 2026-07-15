@@ -96,11 +96,40 @@ def main():
     except ImportError:
         pass
 
-    # 追加今日日志（供周报使用）
+    # 追加今日日志（供周报使用）— 必须 commit + push 才能在每日间持久化
     wuxing_scores = calc_wuxing(today)
     append_daily_log(today, wuxing_scores)
+    _commit_and_push_log()
 
     print("✅ 完成")
+
+
+def _commit_and_push_log() -> None:
+    """在 GitHub Actions 中提交并推送 week_log.json，保证跨天持久化。"""
+    token = os.getenv("GH_TOKEN") or os.getenv("GITHUB_TOKEN") or ""
+    if not token:
+        print("  ⚠️ 未找到 GH_TOKEN，跳过周报日志持久化")
+        return
+
+    import subprocess
+
+    remote = f"https://x-access-token:{token}@github.com/{os.getenv('GITHUB_REPOSITORY', 'lucasshao96/wuxing-daily')}.git"
+    log_path = "data/week_log.json"
+
+    try:
+        subprocess.run(["git", "config", "user.name", "GitHub Actions"], check=True, capture_output=True)
+        subprocess.run(["git", "config", "user.email", "actions@github.com"], check=True, capture_output=True)
+        subprocess.run(["git", "add", log_path], check=True, capture_output=True)
+        # 如果有变更才提交
+        r = subprocess.run(["git", "diff", "--cached", "--quiet"], capture_output=True)
+        if r.returncode == 0:
+            print("  📋 week_log 无变更，跳过提交")
+            return
+        subprocess.run(["git", "commit", "-m", "data: update week_log"], check=True, capture_output=True)
+        subprocess.run(["git", "push", remote, "master"], check=True, capture_output=True)
+        print("  📋 week_log 已提交并推送")
+    except Exception as e:
+        print(f"  ⚠️ week_log 持久化失败: {e}")
 
 
 if __name__ == "__main__":
