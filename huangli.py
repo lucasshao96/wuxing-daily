@@ -5,7 +5,7 @@
 """
 
 from datetime import date
-from ganzhi import get_jieqi, TIAN_GAN, DI_ZHI
+from ganzhi import get_jieqi, TIAN_GAN, DI_ZHI, ALL_JIEQI
 
 # ── 60甲子日宜忌 ──────────────────────────────────────
 # 每个日干支取"宜"前3条、"忌"前2条
@@ -289,3 +289,76 @@ def is_jie_month_change(d: date) -> bool:
     """当天是否为'节'（换月点，非'气'）"""
     name = get_jieqi(d)
     return name is not None and name in JIE_MONTHS
+
+
+# ── 彭祖百忌 ──────────────────────────────────────────
+
+PENGZU_GAN = {
+    "甲": "甲不开仓，财物耗散",
+    "乙": "乙不栽植，千株不长",
+    "丙": "丙不修灶，必见灾殃",
+    "丁": "丁不剃头，头必生疮",
+    "戊": "戊不受田，田主不祥",
+    "己": "己不破券，二比并亡",
+    "庚": "庚不经络，织机虚张",
+    "辛": "辛不合酱，主人不尝",
+    "壬": "壬不决水，难更堤防",
+    "癸": "癸不词讼，理弱敌强",
+}
+
+PENGZU_ZHI = {
+    "子": "子不问卜，自惹灾殃",
+    "丑": "丑不冠带，主不还乡",
+    "寅": "寅不祭祀，神鬼不尝",
+    "卯": "卯不穿井，水泉不香",
+    "辰": "辰不哭泣，必主重丧",
+    "巳": "巳不远行，财物伏藏",
+    "午": "午不苫盖，屋更门窗",
+    "未": "未不服药，毒气入肠",
+    "申": "申不安床，鬼祟入房",
+    "酉": "酉不会客，宾主有伤",
+    "戌": "戌不乞狗，作怪上床",
+    "亥": "亥不嫁娶，不利新郎",
+}
+
+
+def get_pengzu_bai_ji(day_gan: str, day_zhi: str) -> dict:
+    """返回当日彭祖百忌 {'gan': '...', 'zhi': '...'}"""
+    return {
+        "gan": PENGZU_GAN.get(day_gan, ""),
+        "zhi": PENGZU_ZHI.get(day_zhi, ""),
+    }
+
+
+# ── 节气倒计时 ────────────────────────────────────────
+
+def get_next_jieqi(d: date) -> dict | None:
+    """计算距离下一个节气的天数。
+
+    Returns: {'name': '大暑', 'date': date(...), 'days': 7} 或 None
+    """
+    from datetime import timedelta
+
+    all_dates = sorted(ALL_JIEQI.keys())  # (month, day) tuples sorted
+
+    # 构建本年所有节气日期
+    jieqi_list = []
+    for m, day in all_dates:
+        jieqi_list.append((date(d.year, m, day), ALL_JIEQI[(m, day)]))
+
+    # 也检查次年1月的节气（小寒/大寒可能跨年）
+    for m, day in all_dates:
+        if m == 1:
+            jieqi_list.append((date(d.year + 1, m, day), ALL_JIEQI[(m, day)]))
+
+    jieqi_list.sort()
+
+    # 找下一个 > d 的节气
+    for jq_date, jq_name in jieqi_list:
+        if jq_date > d:
+            return {
+                "name": jq_name,
+                "date": jq_date,
+                "days": (jq_date - d).days,
+            }
+    return None
