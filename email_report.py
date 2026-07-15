@@ -85,9 +85,9 @@ def render_plain(report: dict) -> str:
     """生成纯文本版邮件"""
     today = report["date"]
     lines = [
-        f"🎋 {today.strftime('%Y年%m月%d日')} {report['weekday']} 五行日报",
+        f"🎋 {today.strftime('%Y年%m月%d日')} {report['weekday']} 明日五行预报",
         "=" * 40,
-        f"📅 今日四柱: {report['year_ganzhi']}年 {report['month_ganzhi']}月 {report['day_ganzhi']}日 {report['hour_ganzhi']}时",
+        f"📅 明日四柱: {report['year_ganzhi']}年 {report['month_ganzhi']}月 {report['day_ganzhi']}日 {report['hour_ganzhi']}时",
         f"   纳音: 年柱{report['nayin_year']} 月柱{report['nayin_month']} 日柱{report['nayin_day']} 时柱{report['nayin_hour']}",
         "",
         "🔥 五行旺衰:",
@@ -98,7 +98,7 @@ def render_plain(report: dict) -> str:
 
     lines += [
         "",
-        f"⚡ 今日冲煞: 冲{report['chong_zodiac']} 煞{report['sha_direction']}",
+        f"⚡ 明日冲煞: 冲{report['chong_zodiac']} 煞{report['sha_direction']}",
         f"⏰ 吉时: {', '.join(f'{z}({t})' for z,t in report['ji_shi'])}",
     ]
     if report.get("gui_ren"):
@@ -203,12 +203,12 @@ def render_html(report: dict) -> str:
 <style>{CSS}</style></head><body>
 <div class="card">
 <div class="header">
-  <h1>🎋 {today.strftime('%Y年%m月%d日')} {report['weekday']} 五行日报</h1>
-  <p>仅供参考，不构成建议</p>
+  <h1>🎋 {today.strftime('%Y年%m月%d日')} {report['weekday']} 明日五行预报</h1>
+  <p>晚上看明天的，早上照着穿</p>
 </div>"""]
 
     # -- 干支区（四柱）--
-    parts.append('<div class="section"><h2>📅 今日四柱</h2>')
+    parts.append('<div class="section"><h2>📅 明日四柱</h2>')
     parts.append('<div class="pillar-row">')
     for label, gz, nayin in [
         ("年柱", report["year_ganzhi"], report["nayin_year"]),
@@ -237,7 +237,7 @@ def render_html(report: dict) -> str:
     parts.append('</div>')
 
     # -- 冲煞 + 吉时 + 贵人 --
-    parts.append('<div class="section"><h2>⚡ 今日冲煞</h2>')
+    parts.append('<div class="section"><h2>⚡ 明日冲煞</h2>')
     parts.append(f'<div class="chongsha-box">'
                  f'🐒 <b>寅申相冲（冲{report["chong_zodiac"]}）</b> — 属{report["chong_zodiac"]}的人今天重要决策多加留意<br>'
                  f'🧭 <b>煞{report["sha_direction"]}</b> -- 重要事情避开此方位</div>')
@@ -247,14 +247,14 @@ def render_html(report: dict) -> str:
 
     if report.get("gui_ren"):
         gui_ren_text = "、".join(report["gui_ren"])
-        parts.append(f'<div class="guiren-box">👤 天乙贵人: <b>{gui_ren_text}</b> — 今日求助可找属{"、".join(report["gui_ren_zodiac"])}的朋友</div>')
+        parts.append(f'<div class="guiren-box">👤 天乙贵人: <b>{gui_ren_text}</b> — 明日求助可找属{"、".join(report["gui_ren_zodiac"])}的朋友</div>')
 
     parts.append('</div>')
 
     # -- 宜忌 + 彭祖百忌 --
     yi_text = " · ".join(f'<span class="yi">✅ {y}</span>' for y in report["yi"])
     ji_text = " · ".join(f'<span class="ji">❌ {j}</span>' for j in report["ji"])
-    parts.append('<div class="section"><h2>📜 今日宜忌</h2>')
+    parts.append('<div class="section"><h2>📜 明日宜忌</h2>')
     parts.append(f'<div class="yiji-box">{yi_text}<br>{ji_text}</div>')
 
     if report.get("pengzu"):
@@ -274,7 +274,7 @@ def render_html(report: dict) -> str:
     for user_block in report["users"]:
         a = user_block["advice"]
         parts.append(f'<div class="personal-card">'
-                     f'<h3>{user_block["name"]} — {a["day_master"]}日主 · 今日{report["day_ganzhi"]}日</h3>'
+                     f'<h3>{user_block["name"]} — {a["day_master"]}日主 · 明日{report["day_ganzhi"]}日</h3>'
                      f'<div style="font-size:15px;font-weight:600;color:#2d5016">→ {a["shi_shen_main"]}日</div>')
 
         # 综合解读
@@ -299,7 +299,7 @@ def render_html(report: dict) -> str:
 
         # 配色
         c = user_block["colors"]
-        parts.append('<div style="margin-top:10px"><b>🎨 今日配色</b></div>')
+        parts.append('<div style="margin-top:10px"><b>🎨 明日配色</b></div>')
         parts.append('<div class="color-box">')
         for rec in c["recommend"]:
             parts.append(f'<div class="color-rec">✅ {rec}</div>')
@@ -312,7 +312,7 @@ def render_html(report: dict) -> str:
         ls = user_block.get("lifestyle", {})
         if ls:
             parts.append('<div style="margin-top:12px;background:#f9fafb;border-radius:8px;padding:12px 16px;font-size:13px;line-height:1.8">')
-            parts.append(f'<div style="font-weight:600;margin-bottom:6px">🏠 今日生活建议</div>')
+            parts.append(f'<div style="font-weight:600;margin-bottom:6px">🏠 明日生活建议</div>')
             parts.append(f'<div>💪 <b>健康:</b> {ls["health"]}</div>')
             parts.append(f'<div>🍽️ <b>饮食:</b> {"、".join(ls["diet"])}</div>')
             parts.append(f'<div>🚗 <b>出行:</b> {ls["travel"]}</div>')

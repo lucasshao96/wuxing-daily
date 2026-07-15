@@ -135,7 +135,7 @@ def generate_daily_reading(day_master: str, day_gan: str, day_zhi: str, zodiac: 
     main_meaning = SHI_SHEN_MEANING.get(main_ss, "")
     day_wx = GAN_WUXING[day_gan]
     sentences.append(
-        f"今日{day_gan}{day_wx}为你的{main_ss}——建议关注{main_meaning}相关事项。"
+        f"明日{day_gan}{day_wx}为你的{main_ss}——建议关注{main_meaning}相关事项。"
     )
 
     # 第二句: 藏干分析
@@ -198,11 +198,11 @@ def generate_lifestyle(day_master: str, day_zhi: str, wuxing_scores: dict, zodia
 
     travel = ""
     if zodiac == chong_zod:
-        travel = f"今日是你的冲煞日，出行建议多加留意。重要安排尽量避开{sha_dir}。"
+        travel = f"明日是你的冲煞日，出行建议多加留意。重要安排尽量避开{sha_dir}。"
     else:
-        travel = f"今日煞{sha_dir}，重要安排建议避开此方位。"
+        travel = f"明日煞{sha_dir}，重要安排建议避开此方位。"
 
-    routine = f"今日{weakest}弱，重点养护{wx_organ.get(weakest, '身体')}。"
+    routine = f"明日{weakest}弱，重点养护{wx_organ.get(weakest, '身体')}。"
 
     return {"health": health, "diet": diet, "travel": travel, "routine": routine}
 
@@ -238,7 +238,7 @@ def generate_advice(user: dict, d: date) -> dict:
     chong_zod, _ = get_chong_zodiac(dz)
     zodiac_alert = ""
     if zodiac == chong_zod:
-        zodiac_alert = f"🐒 今日冲{zodiac}，属{zodiac}的人重要决策建议多加留意"
+        zodiac_alert = f"🐒 明日冲{zodiac}，属{zodiac}的人重要决策建议多加留意"
 
     return {
         "day_master": f"{dm}{GAN_WUXING[dm]}",
@@ -256,7 +256,7 @@ def generate_colors(wuxing_scores: dict) -> dict:
 
     Returns:
         {"recommend": ["白色/金色", "黄色/棕色"], "avoid": ["绿色/青色"],
-         "reason": "今日金弱需补，土生金为辅。木旺需避。"}
+         "reason": "明日金弱需补，土生金为辅。木旺需避。"}
     """
     # 按分数排序
     sorted_wx = sorted(wuxing_scores.items(), key=lambda x: x[1]["score"])
@@ -270,7 +270,7 @@ def generate_colors(wuxing_scores: dict) -> dict:
     avoid = [f"{COLOR_MAP[strongest][0]}/{COLOR_MAP[strongest][1]}"]
 
     # 理由
-    reason = f"今日{weakest}弱需补{'，' + second_weakest + '为辅' if second_weakest != weakest else ''}。{strongest}旺需避。"
+    reason = f"明日{weakest}弱需补{'，' + second_weakest + '为辅' if second_weakest != weakest else ''}。{strongest}旺需避。"
 
     return {"recommend": recommend, "avoid": avoid, "reason": reason}
 

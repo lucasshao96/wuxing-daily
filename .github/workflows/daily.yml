@@ -2,7 +2,7 @@ name: Daily Wuxing Report
 
 on:
   schedule:
-    - cron: '0 23 * * *'  # 7:00 AM Beijing time (UTC+8)
+    - cron: '0 14 * * *'  # 22:00 Beijing time (UTC+8)
   workflow_dispatch:        # Manual trigger
 
 permissions:

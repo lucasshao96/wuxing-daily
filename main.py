@@ -38,9 +38,9 @@ def load_users() -> list:
 
 
 def main():
-    today = date.today()
+    today = date.today() + timedelta(days=1)  # 提前一天发明天的预报
     beijing_now = datetime.now(BEIJING)
-    print(f"🎋 五行每日播报 — {today} {beijing_now.strftime('%H:%M')} BJT")
+    print(f"🎋 五行每日播报 — {today} (明日) {beijing_now.strftime('%H:%M')} BJT")
 
     # 加载用户
     users = load_users()
@@ -83,7 +83,7 @@ def main():
         user_html = render_html(user_report)
         user_plain = render_plain(user_report)
 
-        subj = f"🎋 {today.strftime('%Y年%m月%d日')} 五行日报"
+        subj = f"🎋 {today.strftime('%Y年%m月%d日')} 明日五行预报"
         if report.get("jieqi_name"):
             subj = f"🌾 {report['jieqi_name']} | {subj}"
 
