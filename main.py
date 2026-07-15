@@ -64,22 +64,29 @@ def main():
         report["monthly"] = monthly
         print("  📆 月报已附加")
 
-    # 生成邮件内容
-    html = render_html(report)
-    plain = render_plain(report)
-
-    # 发送邮件（每人独立）
-    subj = f"🎋 {today.strftime('%Y年%m月%d日')} 五行日报"
-    if report.get("jieqi_name"):
-        subj = f"🌾 {report['jieqi_name']} | {subj}"
-
+    # 生成邮件内容 每人独立邮件 — 只含自己的个性化卡片
     print("  发送邮件...")
     for user in users:
         email = user.get("email", "")
-        if email:
-            send_email(email, subj, html, plain)
-        else:
+        if not email:
             print(f"  ⚠️ {user['name']} 没有配置 email，跳过")
+            continue
+
+        # 构建单用户报表
+        user_report = build_report_data(today, [user])
+        if weekly:
+            user_report["weekly"] = weekly
+        if monthly:
+            user_report["monthly"] = monthly
+
+        user_html = render_html(user_report)
+        user_plain = render_plain(user_report)
+
+        subj = f"🎋 {today.strftime('%Y年%m月%d日')} 五行日报"
+        if report.get("jieqi_name"):
+            subj = f"🌾 {report['jieqi_name']} | {subj}"
+
+        send_email(email, subj, user_html, user_plain)
 
     # 推送通知
     try:

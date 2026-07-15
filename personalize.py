@@ -122,7 +122,7 @@ def generate_advice(user: dict, d: date) -> dict:
         zodiac_alert = f"🐒 今日冲{zodiac}，属{zodiac}的人今天小心行事"
 
     return {
-        "day_master": f"{dm}火",
+        "day_master": f"{dm}{GAN_WUXING[dm]}",
         "shi_shen_main": main_ss,
         "fit": advice["fit"],
         "avoid": advice["avoid"],
