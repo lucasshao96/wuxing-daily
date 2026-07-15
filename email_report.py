@@ -14,7 +14,7 @@ from ganzhi import day_ganzhi, year_ganzhi, month_ganzhi, hour_ganzhi, get_nayin
 from wuxing import calc_wuxing
 from shensha import get_chong_zodiac, get_ji_shi, get_tianyi_gui_ren
 from huangli import get_yi_ji, get_jieqi_detail, get_pengzu_bai_ji, get_next_jieqi
-from personalize import generate_advice, generate_colors, check_annual_alert
+from personalize import generate_advice, generate_colors, check_annual_alert, generate_lifestyle
 from week_report import build_weekly_section
 from month_report import build_monthly_section
 
@@ -132,6 +132,14 @@ def render_plain(report: dict) -> str:
         ]
         if user_block["advice"].get("zodiac_alert"):
             lines.append(f"   {user_block['advice']['zodiac_alert']}")
+        ls = user_block.get("lifestyle", {})
+        if ls:
+            lines += [
+                f"   💪 健康: {ls['health']}",
+                f"   🍽️ 饮食: {'、'.join(ls['diet'])}",
+                f"   🚗 出行: {ls['travel']}",
+                f"   ⏰ 作息: {ls['routine']}",
+            ]
         if user_block.get("alert"):
             lines.append(f"   {user_block['alert']}")
 
@@ -300,6 +308,17 @@ def render_html(report: dict) -> str:
         parts.append('</div>')
         parts.append(f'<div style="font-size:12px;color:#636e72;margin-top:4px">💡 {c["reason"]}</div>')
 
+        # 生活建议
+        ls = user_block.get("lifestyle", {})
+        if ls:
+            parts.append('<div style="margin-top:12px;background:#f9fafb;border-radius:8px;padding:12px 16px;font-size:13px;line-height:1.8">')
+            parts.append(f'<div style="font-weight:600;margin-bottom:6px">🏠 今日生活建议</div>')
+            parts.append(f'<div>💪 <b>健康:</b> {ls["health"]}</div>')
+            parts.append(f'<div>🍽️ <b>饮食:</b> {"、".join(ls["diet"])}</div>')
+            parts.append(f'<div>🚗 <b>出行:</b> {ls["travel"]}</div>')
+            parts.append(f'<div>⏰ <b>作息:</b> {ls["routine"]}</div>')
+            parts.append('</div>')
+
         # 年度策略警报
         if user_block.get("alert"):
             parts.append(f'<div class="alert-box">{user_block["alert"]}</div>')
@@ -393,11 +412,13 @@ def build_report_data(d: date, users: list) -> dict:
         advice = generate_advice(u, d)
         colors = generate_colors(wuxing_scores)
         alert = check_annual_alert(d)
+        lifestyle = generate_lifestyle(u.get("day_master", "丁"), dz, wuxing_scores, u.get("zodiac", ""))
         user_blocks.append({
             "name": u["name"],
             "advice": advice,
             "colors": colors,
             "alert": alert,
+            "lifestyle": lifestyle,
         })
 
     report = {

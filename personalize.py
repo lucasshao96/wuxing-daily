@@ -158,6 +158,55 @@ def generate_daily_reading(day_master: str, day_gan: str, day_zhi: str, zodiac: 
     return "".join(sentences)
 
 
+def generate_lifestyle(day_master: str, day_zhi: str, wuxing_scores: dict, zodiac: str) -> dict:
+    """根据五行旺衰和冲煞生成日常生活建议。
+
+    Returns: {"health": "...", "diet": [...], "travel": "...", "routine": "..."}
+    """
+    # 找最弱和最强五行
+    sorted_wx = sorted(wuxing_scores.items(), key=lambda x: x[1]["score"])
+    weakest = sorted_wx[0][0]
+    strongest = sorted_wx[-1][0]
+
+    # 五行→五脏
+    wx_organ = {"木": "肝", "火": "心", "土": "脾胃", "金": "肺", "水": "肾"}
+
+    # 五行→养生建议
+    wx_health = {
+        "木": "养肝护肝。早睡（23:00前），少喝酒熬夜。",
+        "火": "养心安神。午间小憩片刻，避免情绪过激。",
+        "土": "健脾养胃。三餐规律，少食生冷油腻。",
+        "金": "润肺防燥。深呼吸练习，多喝温水。",
+        "水": "补肾藏精。23:00前入睡，减少消耗性活动。",
+    }
+
+    # 五行→对应食物
+    wx_foods = {
+        "木": ["绿色蔬菜（菠菜、芹菜）", "绿豆", "绿茶"],
+        "火": ["红枣", "枸杞", "番茄", "苦瓜"],
+        "土": ["小米粥", "南瓜", "山药", "红薯"],
+        "金": ["白萝卜", "雪梨", "银耳", "百合"],
+        "水": ["黑豆", "黑芝麻", "海带", "黑木耳"],
+    }
+
+    # 冲煞出行
+    from shensha import get_chong_zodiac
+    chong_zod, sha_dir = get_chong_zodiac(day_zhi)
+
+    health = wx_health.get(weakest, "保持规律作息，适当运动。")
+    diet = wx_foods.get(weakest, ["均衡饮食，多喝水"])[:3]
+
+    travel = ""
+    if zodiac == chong_zod:
+        travel = f"你是今日冲煞生肖，出行小心。重要事情避开{sha_dir}。"
+    else:
+        travel = f"今日煞{sha_dir}，重要事情避开此方位。"
+
+    routine = f"今日{weakest}弱，重点养护{wx_organ.get(weakest, '身体')}。"
+
+    return {"health": health, "diet": diet, "travel": travel, "routine": routine}
+
+
 def generate_advice(user: dict, d: date) -> dict:
     """为指定用户生成当日个性化建议。
 
