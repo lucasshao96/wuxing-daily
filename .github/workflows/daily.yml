@@ -2,7 +2,7 @@ name: Daily Wuxing Report
 
 on:
   schedule:
-    - cron: '0 14 * * *'  # 22:00 Beijing time (UTC+8)
+    - cron: '0 10 * * *'  # UTC 10:00 = 北京 18:00; GitHub Actions 通常延迟~4h，实际约 22:00 到达
   workflow_dispatch:        # Manual trigger
 
 permissions:
