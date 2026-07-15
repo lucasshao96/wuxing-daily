@@ -1,5 +1,7 @@
 # 🎋 五行每日播报 (Wuxing Daily)
 
+![Daily Report](https://github.com/lucasshao96/wuxing-daily/actions/workflows/daily.yml/badge.svg)
+
 每天早上 7:00 自动推送个性化五行日报到你的邮箱。纯算法计算，零外部 API 依赖。
 
 ## 功能
