@@ -239,7 +239,7 @@ def render_html(report: dict) -> str:
     # -- 冲煞 + 吉时 + 贵人 --
     parts.append('<div class="section"><h2>⚡ 今日冲煞</h2>')
     parts.append(f'<div class="chongsha-box">'
-                 f'🐒 <b>冲{report["chong_zodiac"]}</b> -- 属{report["chong_zodiac"]}的人今天小心<br>'
+                 f'🐒 <b>寅申相冲（冲{report["chong_zodiac"]}）</b> — 属{report["chong_zodiac"]}的人今天重要决策多加留意<br>'
                  f'🧭 <b>煞{report["sha_direction"]}</b> -- 重要事情避开此方位</div>')
 
     ji_shi_text = " · ".join(f"{z}时({t})" for z, t in report["ji_shi"])

@@ -55,7 +55,7 @@ COLOR_MAP = {
 ANNUAL_ALERTS = [
     {
         "start": date(2026, 11, 7), "end": date(2026, 12, 6),
-        "msg": "⚠️ 本月子午冲最重，诸事小心。亥水入局激活受伤的子水——机会出现但风险并存。只接8-10月讨论过的方向，不碰全新事物。"
+        "msg": "⚠️ 本月子午冲最重，建议凡事多加留意。亥水入局带来新变数——机遇与风险并存。优先推进已论证的方向，暂缓全新尝试。"
     },
     {
         "start": date(2026, 8, 7), "end": date(2026, 10, 7),
@@ -97,11 +97,11 @@ def shi_shen(day_master: str, other_gan: str) -> str:
 
 # 十神简短含义（用于解读文本）
 SHI_SHEN_MEANING = {
-    "正财": "财务机会", "偏财": "意外之财",
-    "正官": "事业发展", "偏官": "挑战突破",
-    "正印": "学习思考", "偏印": "深度钻研",
-    "食神": "创意享受", "伤官": "表达创新",
-    "比肩": "合作竞争", "劫财": "人际社交",
+    "正财": "处理财务", "偏财": "灵活投资",
+    "正官": "推进工作", "偏官": "应对挑战",
+    "正印": "学习充电", "偏印": "深度思考",
+    "食神": "创作放松", "伤官": "表达交流",
+    "比肩": "合作共赢", "劫财": "社交拓展",
 }
 
 
@@ -135,7 +135,7 @@ def generate_daily_reading(day_master: str, day_gan: str, day_zhi: str, zodiac: 
     main_meaning = SHI_SHEN_MEANING.get(main_ss, "")
     day_wx = GAN_WUXING[day_gan]
     sentences.append(
-        f"今日{day_gan}{day_wx}为你的{main_ss}——{main_meaning}是今天的主旋律。"
+        f"今日{day_gan}{day_wx}为你的{main_ss}——建议关注{main_meaning}相关事项。"
     )
 
     # 第二句: 藏干分析
@@ -149,9 +149,9 @@ def generate_daily_reading(day_master: str, day_gan: str, day_zhi: str, zodiac: 
     warn_ss = [c for c in cang if c["shi_shen"] in ("伤官", "偏官", "劫财")]
     tips = []
     if good_ss:
-        tips.append(f"利好{good_ss[0]['meaning']}")
+        tips.append(f"适合处理{good_ss[0]['meaning']}相关事务")
     if warn_ss:
-        tips.append(f"注意{warn_ss[0]['meaning']}相关事宜")
+        tips.append(f"在{warn_ss[0]['meaning']}方面多加留意")
     if tips:
         sentences.append("综合来看，" + "，".join(tips) + "。")
 
@@ -198,9 +198,9 @@ def generate_lifestyle(day_master: str, day_zhi: str, wuxing_scores: dict, zodia
 
     travel = ""
     if zodiac == chong_zod:
-        travel = f"你是今日冲煞生肖，出行小心。重要事情避开{sha_dir}。"
+        travel = f"今日是你的冲煞日，出行建议多加留意。重要安排尽量避开{sha_dir}。"
     else:
-        travel = f"今日煞{sha_dir}，重要事情避开此方位。"
+        travel = f"今日煞{sha_dir}，重要安排建议避开此方位。"
 
     routine = f"今日{weakest}弱，重点养护{wx_organ.get(weakest, '身体')}。"
 
@@ -238,7 +238,7 @@ def generate_advice(user: dict, d: date) -> dict:
     chong_zod, _ = get_chong_zodiac(dz)
     zodiac_alert = ""
     if zodiac == chong_zod:
-        zodiac_alert = f"🐒 今日冲{zodiac}，属{zodiac}的人今天小心行事"
+        zodiac_alert = f"🐒 今日冲{zodiac}，属{zodiac}的人重要决策建议多加留意"
 
     return {
         "day_master": f"{dm}{GAN_WUXING[dm]}",
