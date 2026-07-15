@@ -26,6 +26,7 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Run daily report
+        id: report
         env:
           USERS: ${{ secrets.USERS }}
           EMAIL_SENDER: ${{ secrets.EMAIL_SENDER }}
@@ -38,3 +39,14 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN || '' }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID || '' }}
         run: python main.py
+
+      - name: Notify failure
+        if: failure()
+        env:
+          SCKEY: ${{ secrets.SERVERCHAN_SCKEY || '' }}
+        run: |
+          if [ -n "$SCKEY" ]; then
+            curl -s "https://sctapi.ftqq.com/$SCKEY.send" \
+              -d "title=❌ 五行日报发送失败" \
+              -d "desp=GitHub Actions 运行失败，请检查：${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          fi
