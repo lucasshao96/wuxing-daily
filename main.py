@@ -7,6 +7,13 @@
 import json, os, sys
 from datetime import date, datetime, timezone, timedelta
 
+# Windows GBK 终端兼容: GitHub Actions (Ubuntu) 不受影响
+if sys.platform == "win32":
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
 from email_report import build_report_data, render_html, render_plain, send_email
 from week_report import build_weekly_section, append_daily_log
 from month_report import build_monthly_section
