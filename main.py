@@ -15,6 +15,7 @@ if sys.platform == "win32":
         pass
 
 from email_report import build_report_data, render_html, render_plain, send_email
+# render_plain used in push notification fallback below
 from week_report import build_weekly_section, append_daily_log
 from month_report import build_monthly_section
 from wuxing import calc_wuxing
@@ -88,11 +89,13 @@ def main():
 
         send_email(email, subj, user_html, user_plain)
 
-    # 推送通知
+    # 推送通知（用第一个用户的纯文本内容）
     try:
         from channels import push_all
-        report["_plain_text"] = plain
-        push_all(report)
+        if users:
+            user_report = build_report_data(today, [users[0]])
+            report["_plain_text"] = render_plain(user_report)
+            push_all(report)
     except ImportError:
         pass
 
