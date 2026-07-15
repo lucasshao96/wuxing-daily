@@ -6,7 +6,7 @@
 
 from datetime import date
 from ganzhi import day_ganzhi, year_ganzhi, TIAN_GAN
-from wuxing import calc_wuxing
+from wuxing import calc_wuxing, CANG_GAN
 
 # ── 十神判定 ───────────────────────────────────────────
 # 天干阴阳
@@ -95,6 +95,69 @@ def shi_shen(day_master: str, other_gan: str) -> str:
     return "未知"
 
 
+# 十神简短含义（用于解读文本）
+SHI_SHEN_MEANING = {
+    "正财": "财务机会", "偏财": "意外之财",
+    "正官": "事业发展", "偏官": "挑战突破",
+    "正印": "学习思考", "偏印": "深度钻研",
+    "食神": "创意享受", "伤官": "表达创新",
+    "比肩": "合作竞争", "劫财": "人际社交",
+}
+
+
+def analyze_cang_gan(day_master: str, day_zhi: str) -> list[dict]:
+    """分析日支藏干对日主的十神关系。
+
+    Returns: [{"gan": "甲", "shi_shen": "正印", "qi": "本气", "meaning": "学习思考"}, ...]
+    """
+    hidden = CANG_GAN.get(day_zhi, {})
+    results = []
+    for qi, gan in hidden.items():
+        ss = shi_shen(day_master, gan)
+        results.append({
+            "gan": gan,
+            "shi_shen": ss,
+            "qi": qi,
+            "meaning": SHI_SHEN_MEANING.get(ss, ""),
+        })
+    return results
+
+
+def generate_daily_reading(day_master: str, day_gan: str, day_zhi: str, zodiac: str) -> str:
+    """生成 2-3 句综合解读，串起日干十神 + 藏干 + 冲煞。"""
+    dm_wx = GAN_WUXING[day_master]
+    main_ss = shi_shen(day_master, day_gan)
+    cang = analyze_cang_gan(day_master, day_zhi)
+
+    sentences = []
+
+    # 第一句: 日干十神主调
+    main_meaning = SHI_SHEN_MEANING.get(main_ss, "")
+    day_wx = GAN_WUXING[day_gan]
+    sentences.append(
+        f"今日{day_gan}{day_wx}为你的{main_ss}——{main_meaning}是今天的主旋律。"
+    )
+
+    # 第二句: 藏干分析
+    cang_parts = []
+    for c in cang:
+        cang_parts.append(f"{c['gan']}({c['shi_shen']})")
+    sentences.append(f"{day_zhi}中藏{'·'.join(cang_parts)}，暗含多层影响。")
+
+    # 第三句: 综合行动建议
+    good_ss = [c for c in cang if c["shi_shen"] in ("正印", "正官", "正财", "食神")]
+    warn_ss = [c for c in cang if c["shi_shen"] in ("伤官", "偏官", "劫财")]
+    tips = []
+    if good_ss:
+        tips.append(f"利好{good_ss[0]['meaning']}")
+    if warn_ss:
+        tips.append(f"注意{warn_ss[0]['meaning']}相关事宜")
+    if tips:
+        sentences.append("综合来看，" + "，".join(tips) + "。")
+
+    return "".join(sentences)
+
+
 def generate_advice(user: dict, d: date) -> dict:
     """为指定用户生成当日个性化建议。
 
@@ -104,6 +167,7 @@ def generate_advice(user: dict, d: date) -> dict:
 
     Returns:
         {"day_master": "丁火", "shi_shen_main": "正财",
+         "cang_gan": [...], "daily_reading": "...",
          "fit": [...], "avoid": "...", "zodiac_alert": "..."}
     """
     dg, dz = day_ganzhi(d)
@@ -113,6 +177,12 @@ def generate_advice(user: dict, d: date) -> dict:
     # 日干十神 → 主建议
     main_ss = shi_shen(dm, dg)
     advice = SHI_SHEN_ADVICE.get(main_ss, {"fit": ["保持平常心"], "avoid": "无特别提醒"})
+
+    # 藏干分析
+    cang_gan = analyze_cang_gan(dm, dz)
+
+    # 综合解读
+    daily_reading = generate_daily_reading(dm, dg, dz, zodiac)
 
     # 冲煞检查
     from shensha import get_chong_zodiac
@@ -124,6 +194,8 @@ def generate_advice(user: dict, d: date) -> dict:
     return {
         "day_master": f"{dm}{GAN_WUXING[dm]}",
         "shi_shen_main": main_ss,
+        "cang_gan": cang_gan,
+        "daily_reading": daily_reading,
         "fit": advice["fit"],
         "avoid": advice["avoid"],
         "zodiac_alert": zodiac_alert,

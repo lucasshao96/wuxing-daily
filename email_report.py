@@ -119,6 +119,13 @@ def render_plain(report: dict) -> str:
             "",
             f"━━━ {user_block['name']} ━━━",
             f"🎯 你的建议: {user_block['advice']['shi_shen_main']}日",
+        ]
+        if user_block["advice"].get("daily_reading"):
+            lines.append(f"   📖 {user_block['advice']['daily_reading']}")
+        if user_block["advice"].get("cang_gan"):
+            cg_text = " · ".join(f'{c["gan"]}→{c["shi_shen"]}({c["meaning"]})' for c in user_block["advice"]["cang_gan"])
+            lines.append(f"   藏干: {cg_text}")
+        lines += [
             f"   🌕 适合: {'、'.join(user_block['advice']['fit'])}",
             f"   🌑 注意: {user_block['advice']['avoid']}",
             f"   🎨 {user_block['colors']['reason']}",
@@ -260,9 +267,23 @@ def render_html(report: dict) -> str:
         a = user_block["advice"]
         parts.append(f'<div class="personal-card">'
                      f'<h3>{user_block["name"]} — {a["day_master"]}日主 · 今日{report["day_ganzhi"]}日</h3>'
-                     f'<div>→ {a["shi_shen_main"]}日</div>')
+                     f'<div style="font-size:15px;font-weight:600;color:#2d5016">→ {a["shi_shen_main"]}日</div>')
+
+        # 综合解读
+        if a.get("daily_reading"):
+            parts.append(f'<div style="margin:10px 0;font-size:14px;line-height:1.7;color:#555">'
+                         f'📖 {a["daily_reading"]}</div>')
+
+        # 藏干分析
+        if a.get("cang_gan"):
+            parts.append('<div style="margin:8px 0;font-size:13px;color:#636e72">')
+            parts.append('日支藏干: ')
+            cg_text = " · ".join(f'{c["gan"]}→{c["shi_shen"]}({c["meaning"]})' for c in a["cang_gan"])
+            parts.append(cg_text)
+            parts.append('</div>')
+
         fit_text = " · ".join(a["fit"])
-        parts.append(f'<div class="advice-fit">🌕 适合: {fit_text}</div>')
+        parts.append(f'<div class="advice-fit" style="margin-top:10px">🌕 适合: {fit_text}</div>')
         parts.append(f'<div class="advice-avoid">🌑 注意: {a["avoid"]}</div>')
 
         if a.get("zodiac_alert"):
