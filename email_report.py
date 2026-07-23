@@ -108,9 +108,12 @@ def render_plain(report: dict) -> str:
         f"📜 宜: {'、'.join(report['yi'])}  |  忌: {'、'.join(report['ji'])}",
     ]
     if report.get("pengzu"):
-        lines.append(f"⚠️ 彭祖百忌（传统说法，仅供参考）:")
-        lines.append(f"   {report['pengzu']['gan']}")
-        lines.append(f"   {report['pengzu']['zhi']}")
+        lines.append("⚠️ 彭祖百忌（传统说法，仅供参考）:")
+        pz = report['pengzu']
+        lines.append(f"   「{pz['gan']}」")
+        lines.append(f"   → {pz.get('gan_explain', '')}")
+        lines.append(f"   「{pz['zhi']}」")
+        lines.append(f"   → {pz.get('zhi_explain', '')}")
 
     if report.get("next_jieqi"):
         nj = report["next_jieqi"]
@@ -315,9 +318,10 @@ def render_html(report: dict) -> str:
         pz = report["pengzu"]
         parts.append(f'<div class="pengzu-box">'
                      f'<div style="font-weight:600;margin-bottom:4px">⚠️ 彭祖百忌 <span style="font-weight:400;color:#999;font-size:11px">— 传统说法，仅供参考</span></div>'
-                     f'<div>{pz["gan"]}</div>'
-                     f'<div>{pz["zhi"]}</div>'
-                     f'<div style="font-size:11px;color:#999;margin-top:4px">上半句以日干为准，下半句以日支为准。源自汉代彭祖的逐日禁忌口诀。</div>'
+                     f'<div style="margin-bottom:4px"><b>「{pz["gan"]}」</b></div>'
+                     f'<div style="font-size:12px;color:#666;margin-bottom:8px">→ {pz.get("gan_explain", "")}</div>'
+                     f'<div style="margin-bottom:4px"><b>「{pz["zhi"]}」</b></div>'
+                     f'<div style="font-size:12px;color:#666">→ {pz.get("zhi_explain", "")}</div>'
                      f'</div>')
     parts.append('</div>')
 
