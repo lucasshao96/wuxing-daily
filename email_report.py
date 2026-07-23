@@ -108,7 +108,9 @@ def render_plain(report: dict) -> str:
         f"📜 宜: {'、'.join(report['yi'])}  |  忌: {'、'.join(report['ji'])}",
     ]
     if report.get("pengzu"):
-        lines.append(f"⚠️ 彭祖百忌: {report['pengzu']['gan']}；{report['pengzu']['zhi']}")
+        lines.append(f"⚠️ 彭祖百忌（传统说法，仅供参考）:")
+        lines.append(f"   {report['pengzu']['gan']}")
+        lines.append(f"   {report['pengzu']['zhi']}")
 
     if report.get("next_jieqi"):
         nj = report["next_jieqi"]
@@ -157,26 +159,78 @@ def render_plain(report: dict) -> str:
 
     if report.get("weekly"):
         w = report["weekly"]
-        lines += ["", "📊 本周五行回顾"]
-        for day_info in w["week_days"]:
-            lines.append(f"   {day_info['weekday']} {day_info['ganzhi']} -> {day_info['summary']}")
-        lines += ["", "📅 下周预览"]
-        for hl in w["next_highlights"]:
-            lines.append(f"   {hl['date']} {hl['ganzhi']} · 冲{hl['chong']}")
+        lines += [
+            "",
+            "=" * 40,
+            f"📊 下周运势预报 ({w['period']})",
+            "=" * 40,
+            f"   本周主导: {w['dominant']}气",
+            f"   基调: {w['mood']}",
+        ]
+        if w["last_week_trend"]:
+            lines.append(f"   {w['last_week_trend']}")
+        lines += ["", "   📋 每日速览:"]
+        for day in w["daily"]:
+            flags = []
+            if day["chong"]: flags.append(f"冲{day['chong']}")
+            if day["jieqi"]: flags.append(f"🌾{day['jieqi']}")
+            flag_text = f" ({', '.join(flags)})" if flags else ""
+            lines.append(f"   {day['date']} {day['weekday']} {day['ganzhi']} {day['strongest']}旺{flag_text}")
+        if w.get("key_days"):
+            lines.append("")
+            for kd in w["key_days"]:
+                lines.append(f"   ⚡ {kd['date']} {kd['weekday']} {kd['ganzhi']}: {', '.join(kd['reasons'])}")
+        adv = w["advice"]
+        lines += [
+            "",
+            f"   ✅ 适合: {' · '.join(adv['do'])}",
+            f"   ❌ 不适合: {' · '.join(adv['avoid'])}",
+            f"   ⚠️ 注意: {' · '.join(adv['watch'])}",
+        ]
+        ls = w.get("lifestyle", {})
+        if ls:
+            lines += [
+                "",
+                f"   💪 健康: {ls.get('health', '')}",
+                f"   🍽️ 饮食: {'、'.join(ls.get('diet', []))}",
+                f"   ⏰ 作息: {ls.get('routine', '')}",
+                f"   🚗 出行: {ls.get('travel', '')}",
+            ]
+        if w.get("user_tips"):
+            lines.append("")
+            for ut in w["user_tips"]:
+                lines.append(f"   👤 {ut['name']}: {ut['tip']}")
 
     if report.get("monthly"):
         m = report["monthly"]
         lines += [
             "",
-            f"📆 {m['month_ganzhi']}月 · {m['month_wx']}气当令",
-            f"   {m['mood']}",
-            "   本月关键日:",
+            "=" * 40,
+            f"📆 月运总览 ({m['period']})",
+            "=" * 40,
+            f"   月令: {m['month_ganzhi']} | {m['dominant']}气当令",
+            f"   基调: {m['mood']}",
+            f"   {m['energy_curve']}",
         ]
-        for kd in m["key_days"]:
-            lines.append(f"   {kd['date']} {kd['ganzhi']} {kd['label']}")
-        lines.append("   月运提示:")
-        for ut in m["user_tips"]:
-            lines.append(f"   {ut['name']} ({ut['day_master']}·{ut['month_shi_shen']}月): {ut['tip']}")
+        if m.get("key_dates"):
+            lines.append("")
+            for kd in m["key_dates"]:
+                lines.append(f"   ⚡ {kd['date']} {kd['ganzhi']}: {', '.join(kd['reasons'])}")
+        adv = m["advice"]
+        lines += [
+            "",
+            f"   ✅ 适合: {' · '.join(adv['do'])}",
+            f"   ❌ 不适合: {' · '.join(adv['avoid'])}",
+            f"   💪 健康: {adv['health']}",
+        ]
+        if m.get("user_guides"):
+            lines.append("")
+            for ug in m["user_guides"]:
+                lines += [
+                    f"   👤 {ug['name']}: {ug['overview']}",
+                    f"      重点: {ug['focus']}",
+                    f"      注意: {ug['caution']}",
+                ]
 
     lines += [
         "",
@@ -259,7 +313,12 @@ def render_html(report: dict) -> str:
 
     if report.get("pengzu"):
         pz = report["pengzu"]
-        parts.append(f'<div class="pengzu-box">⚠️ <b>彭祖百忌:</b> {pz["gan"]}<br>{"　" if pz["zhi"] else ""} {pz["zhi"]}</div>')
+        parts.append(f'<div class="pengzu-box">'
+                     f'<div style="font-weight:600;margin-bottom:4px">⚠️ 彭祖百忌 <span style="font-weight:400;color:#999;font-size:11px">— 传统说法，仅供参考</span></div>'
+                     f'<div>{pz["gan"]}</div>'
+                     f'<div>{pz["zhi"]}</div>'
+                     f'<div style="font-size:11px;color:#999;margin-top:4px">上半句以日干为准，下半句以日支为准。源自汉代彭祖的逐日禁忌口诀。</div>'
+                     f'</div>')
     parts.append('</div>')
 
     # -- 节气倒计时 --
@@ -341,30 +400,94 @@ def render_html(report: dict) -> str:
     # -- 周报（仅周日）--
     if report.get("weekly"):
         w = report["weekly"]
-        parts.append('<div class="section"><h2>📊 本周五行回顾</h2>')
-        for day_info in w["week_days"]:
-            parts.append(f'<div style="font-size:13px;padding:2px 0">'
-                         f'{day_info["weekday"]} {day_info["ganzhi"]} → {day_info["summary"]}</div>')
-        parts.append('<hr class="divider"><h2>📅 下周预览</h2>')
-        for hl in w["next_highlights"]:
-            parts.append(f'<div style="font-size:13px;padding:2px 0">'
-                         f'{hl["date"]} {hl["ganzhi"]} · 冲{hl["chong"]}</div>')
+        parts.append(f'<div class="section"><h2>📊 下周运势预报 ({w["period"]})</h2>')
+        parts.append(f'<div style="background:#f8f9ff;border-radius:8px;padding:16px;margin:8px 0;font-size:14px;line-height:1.8">'
+                     f'<div style="font-size:16px;font-weight:700;color:#2d5016;margin-bottom:8px">本周主导: {w["dominant"]}气</div>'
+                     f'<div style="color:#555">{w["mood"]}</div>')
+        if w.get("last_week_trend"):
+            parts.append(f'<div style="color:#636e72;font-size:12px;margin-top:6px">{w["last_week_trend"]}</div>')
+        parts.append('</div>')
+
+        # 每日速览
+        parts.append('<div style="font-size:13px;line-height:1.8;margin:8px 0"><b>📋 每日速览</b></div>')
+        for day in w["daily"]:
+            flags = []
+            if day["chong"]: flags.append(f'冲{day["chong"]}')
+            if day["jieqi"]: flags.append(f'🌾{day["jieqi"]}')
+            flag_text = f' <span style="color:#e17055;font-size:11px">({" · ".join(flags)})</span>' if flags else ""
+            parts.append(f'<div style="font-size:13px;padding:3px 0">'
+                         f'{day["date"]} 周{day["weekday"]} · {day["ganzhi"]} · {day["strongest"]}旺{flag_text}</div>')
+
+        # 关键日
+        if w.get("key_days"):
+            parts.append('<div style="font-size:13px;margin-top:8px"><b>⚡ 重点关注日</b></div>')
+            for kd in w["key_days"]:
+                parts.append(f'<div style="font-size:12px;padding:3px 0;color:#e17055">'
+                             f'{kd["date"]} 周{kd["weekday"]} {kd["ganzhi"]}: {", ".join(kd["reasons"])}</div>')
+
+        # 行动建议
+        adv = w["advice"]
+        parts.append(f'<div style="background:#f0fff4;border-radius:8px;padding:12px;margin:12px 0;font-size:13px;line-height:1.8">'
+                     f'<div>✅ <b>适合:</b> {" · ".join(adv["do"])}</div>'
+                     f'<div style="color:#e17055">❌ <b>不适合:</b> {" · ".join(adv["avoid"])}</div>'
+                     f'<div>⚠️ <b>注意:</b> {" · ".join(adv["watch"])}</div>'
+                     f'</div>')
+
+        # 整周生活建议
+        ls = w.get("lifestyle", {})
+        if ls:
+            parts.append(f'<div style="background:#f9fafb;border-radius:8px;padding:12px 16px;margin:8px 0;font-size:13px;line-height:1.8">'
+                         f'<div style="font-weight:600;margin-bottom:6px">🏠 整周生活指南</div>'
+                         f'<div>💪 <b>健康:</b> {ls.get("health", "")}</div>'
+                         f'<div>🍽️ <b>饮食推荐:</b> {"、".join(ls.get("diet", []))}</div>'
+                         f'<div>⏰ <b>作息:</b> {ls.get("routine", "")}</div>'
+                         f'<div>🚗 <b>出行:</b> {ls.get("travel", "")}</div>'
+                         f'</div>')
+
+        # 每人周度建议
+        if w.get("user_tips"):
+            parts.append('<div style="background:#fafafa;border-radius:8px;padding:12px 16px;margin:8px 0;font-size:13px;line-height:1.8">')
+            for ut in w["user_tips"]:
+                parts.append(f'<div style="padding:4px 0"><b>👤 {ut["name"]}</b>: {ut["tip"]}</div>')
+            parts.append('</div>')
         parts.append('</div>')
 
     # -- 月报（仅节气换月日）--
     if report.get("monthly"):
         m = report["monthly"]
-        parts.append('<div class="section"><h2>📆 月运总览</h2>')
-        parts.append(f'<div style="font-size:14px;margin:8px 0"><b>{m["month_ganzhi"]}月 · {m["month_wx"]}气当令</b></div>')
-        parts.append(f'<div style="font-size:13px;color:#636e72;margin:8px 0">{m["mood"]}</div>')
-        parts.append('<div style="font-size:13px"><b>本月关键日:</b></div>')
-        for kd in m["key_days"]:
-            parts.append(f'<div style="font-size:12px;padding:2px 0">'
-                         f'{kd["date"]} {kd["ganzhi"]} {kd["label"]}</div>')
-        parts.append('<div style="font-size:13px;margin-top:10px"><b>月运提示:</b></div>')
-        for ut in m["user_tips"]:
-            parts.append(f'<div style="font-size:13px;padding:4px 0">'
-                         f'<b>{ut["name"]}</b> ({ut["day_master"]}·{ut["month_shi_shen"]}月): {ut["tip"]}</div>')
+        parts.append(f'<div class="section"><h2>📆 月运总览 ({m["period"]})</h2>')
+        parts.append(f'<div style="background:#f0f8ff;border-left:4px solid #0984e3;border-radius:8px;padding:16px;margin:8px 0;font-size:14px;line-height:1.8">'
+                     f'<div style="font-size:16px;font-weight:700;color:#0747a6;margin-bottom:8px">{m["month_ganzhi"]} · {m["dominant"]}气当令</div>'
+                     f'<div style="color:#555">{m["mood"]}</div>'
+                     f'<div style="color:#636e72;font-size:12px;margin-top:6px">{m["energy_curve"]}</div>'
+                     f'</div>')
+
+        # 关键日
+        if m.get("key_dates"):
+            parts.append('<div style="font-size:13px;margin:8px 0"><b>⚡ 本月关键日</b></div>')
+            for kd in m["key_dates"]:
+                parts.append(f'<div style="font-size:12px;padding:2px 0;color:#e17055">'
+                             f'{kd["date"]} {kd["ganzhi"]}: {", ".join(kd["reasons"])}</div>')
+
+        # 月度建议
+        adv = m["advice"]
+        parts.append(f'<div style="background:#f0fff4;border-radius:8px;padding:12px;margin:12px 0;font-size:13px;line-height:1.8">'
+                     f'<div>✅ <b>适合:</b> {" · ".join(adv["do"])}</div>'
+                     f'<div style="color:#e17055">❌ <b>不适合:</b> {" · ".join(adv["avoid"])}</div>'
+                     f'<div>💪 <b>健康:</b> {adv["health"]}</div>'
+                     f'</div>')
+
+        # 每人月度指南
+        if m.get("user_guides"):
+            parts.append('<div style="background:#fafafa;border-radius:8px;padding:12px 16px;margin:8px 0;font-size:13px;line-height:1.8">')
+            for ug in m["user_guides"]:
+                parts.append(f'<div style="padding:6px 0;border-bottom:1px solid #eee">'
+                             f'<div style="font-weight:600">👤 {ug["name"]}</div>'
+                             f'<div style="color:#555">{ug["overview"]}</div>'
+                             f'<div style="color:#00b894">✅ 重点: {ug["focus"]}</div>'
+                             f'<div style="color:#e17055">⚠️ 注意: {ug["caution"]}</div>'
+                             f'</div>')
+            parts.append('</div>')
         parts.append('</div>')
 
     # -- Footer --
@@ -449,7 +572,7 @@ def build_report_data(d: date, users: list) -> dict:
     }
 
     # -- 周报（仅周日）--
-    weekly = build_weekly_section(d)
+    weekly = build_weekly_section(d, users)
     if weekly:
         report["weekly"] = weekly
 
