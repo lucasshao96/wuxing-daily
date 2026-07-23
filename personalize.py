@@ -159,50 +159,124 @@ def generate_daily_reading(day_master: str, day_gan: str, day_zhi: str, zodiac: 
 
 
 def generate_lifestyle(day_master: str, day_zhi: str, wuxing_scores: dict, zodiac: str) -> dict:
-    """根据五行旺衰和冲煞生成日常生活建议。
+    """根据五行旺衰、当日干支和冲煞生成日常生活建议。
+
+    通过多重因子组合让每日建议有变化：
+    - 最弱五行决定养生主调和食物推荐
+    - 当日日干和藏干微调建议变体
+    - 最旺五行给出"过犹不及"的提醒
+    - 冲煞决定出行提示
 
     Returns: {"health": "...", "diet": [...], "travel": "...", "routine": "..."}
     """
-    # 找最弱和最强五行
     sorted_wx = sorted(wuxing_scores.items(), key=lambda x: x[1]["score"])
     weakest = sorted_wx[0][0]
     strongest = sorted_wx[-1][0]
 
-    # 五行→五脏
+    # 用当日最弱五行+最强五行+日支组合生成变化种子，同一天的不同用户看到不同变体
+    variant_seed = (sum(ord(c) for c in f"{weakest}{strongest}{day_zhi}{day_master}") ) % 3
+
     wx_organ = {"木": "肝", "火": "心", "土": "脾胃", "金": "肺", "水": "肾"}
 
-    # 五行→养生建议
+    # ── 健康：每个五行3种变体 ──
     wx_health = {
-        "木": "养肝护肝。早睡（23:00前），少喝酒熬夜。",
-        "火": "养心安神。午间小憩片刻，避免情绪过激。",
-        "土": "健脾养胃。三餐规律，少食生冷油腻。",
-        "金": "润肺防燥。深呼吸练习，多喝温水。",
-        "水": "补肾藏精。23:00前入睡，减少消耗性活动。",
+        "木": [
+            "养肝护肝。23:00前睡，晨起喝杯温水，少喝酒。",
+            "疏肝理气。工作间隙起来走动，不要久坐压抑气血。",
+            "调肝明目。看屏幕每45分钟远眺5分钟，多吃深绿色蔬菜。",
+        ],
+        "火": [
+            "养心安神。午间闭眼休息15分钟，比咖啡管用。",
+            "清心降火。少辣少油炸，情绪激动时深呼吸3次。",
+            "护心养脉。傍晚散步20分钟，心率平稳比剧烈运动好。",
+        ],
+        "土": [
+            "健脾养胃。三餐定时，细嚼慢咽，饭后别马上坐下。",
+            "调脾祛湿。少食生冷甜腻，喝温水比冰水好一百倍。",
+            "补土益气。早餐吃好，午餐吃饱，晚餐吃少。",
+        ],
+        "金": [
+            "润肺防燥。多喝温水，室内保持通风，做深呼吸练习。",
+            "养肺固表。出门注意温差，冷水洗脸增强抵抗力。",
+            "清肺排浊。晨起开窗换气5分钟，白天多喝白开水。",
+        ],
+        "水": [
+            "补肾藏精。23:00前入睡是最好的补药，少熬夜。",
+            "固肾养骨。每天站直拉伸脊椎，久坐伤肾伤腰。",
+            "滋水涵木。多喝温水，下午泡杯枸杞，别等渴了才喝。",
+        ],
     }
 
-    # 五行→对应食物
+    # ── 饮食：每个五行3组变体 ──
     wx_foods = {
-        "木": ["绿色蔬菜（菠菜、芹菜）", "绿豆", "绿茶"],
-        "火": ["红枣", "枸杞", "番茄", "苦瓜"],
-        "土": ["小米粥", "南瓜", "山药", "红薯"],
-        "金": ["白萝卜", "雪梨", "银耳", "百合"],
-        "水": ["黑豆", "黑芝麻", "海带", "黑木耳"],
+        "木": [
+            ["菠菜", "芹菜", "西兰花", "绿豆芽"],
+            ["荠菜", "韭菜", "绿茶", "猕猴桃"],
+            ["生菜", "青椒", "抹茶", "青苹果"],
+        ],
+        "火": [
+            ["红枣", "枸杞", "番茄", "莲子"],
+            ["苦瓜", "红豆", "山楂", "菊花茶"],
+            ["胡萝卜", "草莓", "桂圆", "玫瑰花茶"],
+        ],
+        "土": [
+            ["小米粥", "南瓜", "山药", "红薯"],
+            ["玉米", "土豆", "红枣", "板栗"],
+            ["燕麦", "莲子", "茯苓", "黄豆"],
+        ],
+        "金": [
+            ["白萝卜", "雪梨", "银耳", "百合"],
+            ["莲藕", "白果", "杏仁", "蜂蜜"],
+            ["花菜", "豆腐", "白芝麻", "牛奶"],
+        ],
+        "水": [
+            ["黑豆", "黑芝麻", "海带", "黑木耳"],
+            ["黑米", "核桃", "紫菜", "桑葚"],
+            ["乌鸡", "海参", "黑枸杞", "何首乌"],
+        ],
     }
 
-    # 冲煞出行
+    # ── 过旺提醒（最强五行的影响） ──
+    wx_excess = {
+        "木": "木旺克土，注意脾胃消化。",
+        "火": "火旺克金，注意呼吸道和皮肤。",
+        "土": "土旺克水，注意肾脏和骨骼。",
+        "金": "金旺克木，注意肝胆和筋骨。",
+        "水": "水旺克火，注意心脏和血压。",
+    }
+
     from shensha import get_chong_zodiac
     chong_zod, sha_dir = get_chong_zodiac(day_zhi)
 
-    health = wx_health.get(weakest, "保持规律作息，适当运动。")
-    diet = wx_foods.get(weakest, ["均衡饮食，多喝水"])[:3]
+    # 健康 = 最弱五行养护 + 过旺提醒
+    health_variants = wx_health.get(weakest, wx_health["土"])
+    health = health_variants[variant_seed]
+    if strongest != weakest and variant_seed == 0:
+        health += " " + wx_excess.get(strongest, "")
 
+    # 饮食 = 取变体并去重轮换
+    food_variants = wx_foods.get(weakest, wx_foods["土"])
+    diet = food_variants[variant_seed][:3]
+
+    # 出行
     travel = ""
     if zodiac == chong_zod:
-        travel = f"明日是你的冲煞日，出行建议多加留意。重要安排尽量避开{sha_dir}。"
+        travel = f"明日冲{zodiac}，是你的冲煞日。出行多加留意，重要安排尽量避开{sha_dir}。"
     else:
-        travel = f"明日煞{sha_dir}，重要安排建议避开此方位。"
+        travel_options = [
+            f"明日煞{sha_dir}，重要安排建议避开此方位。",
+            f"明日煞方在{sha_dir}，出行办事尽量不朝这个方向。",
+            f"明日出行注意{sha_dir}方向，日常通勤无碍。",
+        ]
+        travel = travel_options[variant_seed]
 
-    routine = f"明日{weakest}弱，重点养护{wx_organ.get(weakest, '身体')}。"
+    # 作息 = 最弱元素 + 当日特质
+    routine_options = [
+        f"明日{weakest}弱、{strongest}旺——重点养护{wx_organ.get(weakest, '身体')}，同时注意{wx_organ.get(strongest, '身体')}负担。",
+        f"明日五行{strongest}偏旺，{weakest}偏弱。白天发挥{strongest}的优势，晚上多关注{weakest}的养护。",
+        f"明日能量偏{strongest}，做事容易发力。但别忘了{wx_organ.get(weakest, '身体')}需要额外呵护。",
+    ]
+    routine = routine_options[variant_seed]
 
     return {"health": health, "diet": diet, "travel": travel, "routine": routine}
 
